@@ -2,3 +2,6 @@ __pycache__
 .env
 env
 test_db.db
+.pre-commit-config.yaml
+setup.cfg
+alembic.ini

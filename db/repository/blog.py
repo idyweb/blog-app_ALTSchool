@@ -5,8 +5,8 @@ from schemas.blog import CreateBlog
 from schemas.blog import UpdateBlog
 
 
-def create_new_blog(blog: CreateBlog, db: Session, author_id: int = 1):
-    blog = Blog(**blog.dict(), author_id=author_id)
+def create_new_blog(blog: CreateBlog, db: Session, author_id, username):
+    blog = Blog(**blog.dict(), author_id=author_id, username=username)
     db.add(blog)
     db.commit()
     db.refresh(blog)

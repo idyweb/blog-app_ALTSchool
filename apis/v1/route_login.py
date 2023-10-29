@@ -9,6 +9,7 @@ from jose import JWTError
 from sqlalchemy.orm import Session
 
 from config import settings
+from db.models.expired_token import ExpiredToken
 from db.repository.login import get_user
 from db.session import get_db
 from hashing import Hasher
@@ -18,13 +19,13 @@ from security import create_access_token
 router = APIRouter()
 
 
-def authenticate_user(email: str, password: str, db: Session):
-    user = get_user(email=email, db=db)
+def authenticate_user(username: str, password: str, db: Session):
+    user = get_user(username=username, db=db)
     print(user)
     if not user:
-        return False
+        return None
     if not Hasher.verify_password(password, user.password):
-        return False
+        return None
     return user
 
 
@@ -38,7 +39,7 @@ def login_for_access_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
         )
-    access_token = create_access_token(data={"sub": user.email})
+    access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
 
@@ -52,17 +53,24 @@ def get_current_user(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
     )
+    access_token = (
+        db.query(ExpiredToken).filter(ExpiredToken.access_token == token).first()
+    )
+    print(access_token)
+    if not access_token:
 
-    try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        username: str = payload.get("sub")
-        if username is None:
+        try:
+            payload = jwt.decode(
+                token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            )
+            username: str = payload.get("sub")
+            if username is None:
+                raise credentials_exception
+        except JWTError:
             raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-    user = get_user(email=username, db=db)
-    if user is None:
-        raise credentials_exception
-    return user
+        user = get_user(username=username, db=db)
+        if user is None:
+            raise credentials_exception
+        return user
+    else:
+        return {"Error": "expired token"}

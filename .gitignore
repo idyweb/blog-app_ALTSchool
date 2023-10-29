@@ -2,6 +2,7 @@ __pycache__
 .env
 env
 test_db.db
-.pre-commit-config.yaml
+.pre-commit-config.yml
 setup.cfg
 alembic.ini
+sql_app.db

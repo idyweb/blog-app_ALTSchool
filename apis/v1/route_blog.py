@@ -7,6 +7,7 @@ from fastapi import status
 from sqlalchemy.orm import Session
 
 from apis.v1.route_login import get_current_user
+from apis.v1.route_login import oauth2_scheme
 from db.models.user import User
 from db.repository.blog import create_new_blog
 from db.repository.blog import delete_blog
@@ -22,8 +23,13 @@ router = APIRouter()
 
 
 @router.post("/blogs", response_model=ShowBlog, status_code=status.HTTP_201_CREATED)
-async def create_blog(blog: CreateBlog, db: Session = Depends(get_db)):
-    blog = create_new_blog(blog=blog, db=db, author_id=1)
+async def create_blog(
+    blog: CreateBlog,
+    token=Depends(oauth2_scheme),
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    blog = create_new_blog(blog=blog, db=db, author_id=user.id, username=user.username)
     return blog
 
 
@@ -34,8 +40,13 @@ def get_all_blogs(db: Session = Depends(get_db)):
 
 
 @router.get("/blog/{id}", response_model=ShowBlog)
-def get_blog(id: int, db: Session = Depends(get_db)):
-    blog = retreive_blog(id=id, db=db)
+def get_blog(
+    id: int,
+    token=Depends(oauth2_scheme),
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    blog = retreive_blog(id=id, db=db, author_id=user.id)
     if not blog:
         raise HTTPException(
             detail=f"Blog with ID {id} does not exist.",

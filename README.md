@@ -16,7 +16,7 @@ The .env file is a file that stores environment variables that are used by the p
 create a .env file that contains a SECRET_KEY with a value of your choice to run the app successfully.
 * SECRET_KEY=
 
-* Install the requirements
+### Install the requirements
 
 ``` pip install -r requirements.txt ```
 
